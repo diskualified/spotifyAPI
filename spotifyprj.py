@@ -1,12 +1,37 @@
 import requests
+import base64
+
+CLIENT_ID = '4e75cab0012d409da502214e828ade40'
+CLIENT_SECRET = '3a5f1a1c83f442f991b1321a4e78edac'
+client_creds = f"{CLIENT_ID}:{CLIENT_SECRET}"
+client_creds_b64 = base64.b64encode(client_creds.encode())
 
 user_id = 'panda6722'
 artistURL = f'https://api.spotify.com/v1/me/top/artists'
 trackURL = 'https://api.spotify.com/v1/me/top/tracks'
 playlistURL = f'https://api.spotify.com/v1/users/{user_id}/playlists'
 
-# ACCESS_TOKEN = 'BQBR5ebpliJa9AfzRqgNnOBXFg5rikoyMHWIHLflXWhu0kAZYAofE27m73HQOyG_8XWPwNL1AND4c6NcPNUf0-Awz8faxJd9kDA8RCge6yNHqEKWGmk7Y57MCJGbzYx1Nv23-rtQuRNDQ0Q1lxE-5eU2j_gXgI0aBsd_Xw37u4Fs3N8r9_Ivcg'
-ACCESS_TOKEN = 'BQDXECS0CVxPl4aUhY404tHbsyIylnItYIiDG0htC1hFcetRRrh1f43UjMINckLVBoc2Lwb07vY0l8fVHcvvptK_jme6u1M-QtCh0DDnk7E7qehqKWCRYUONpsCsBsc2l0XLIYO4Dhl5YzOBObG_8qoLXAAHvSXWxvxm2ZG00zuvXyjgsDGW7oKozFWubjsBS07cgjnxcXk2Ciyf7P1BLLU4rjlBB-6vmWa--P71xRo'
+auth_url = 'https://accounts.spotify.com/authorize'
+auth_code = requests.get(auth_url, {
+    'client_id': CLIENT_ID,
+    'response_type': 'code',
+    'redirect_uri': 'http://localhost:8888/notebooks/Autho.ipynb',
+})
+token_url = 'https://accounts.spotify.com/api/token'
+token_headers = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'authorization': f"Basic {client_creds_b64.decode()}" # <base64 encoded client_id:client_secret>
+}
+auth_data = {
+    'grant_type': 'authorization_code',
+    'code': auth_code,
+    'redirect_uri': 'http://localhost:8888/notebooks/Autho.ipynb',
+    'client_id': CLIENT_ID,
+    'client_secret': CLIENT_SECRET,
+}
+auth_r = requests.post(token_url, data = auth_data, headers = token_headers)
+print(auth_r.json())
+ACCESS_TOKEN = auth_r.json()["access_token"]
 
 headers = {
     "Authorization": f"Bearer {ACCESS_TOKEN}", 
@@ -32,7 +57,6 @@ def getTopTracks():
                             json={"limit":10, 'time_range': 'short_term'})
 
     myjson = response.json()
-    
     return myjson
 
 def main():
